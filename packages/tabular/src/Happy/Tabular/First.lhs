@@ -21,15 +21,13 @@ Implementation of FIRST
 >           | otherwise = h
 
 @mkClosure@ makes a closure, when given a comparison and iteration loop.
+It's a fixed point computation, we keep applying the function over the
+input until it does not change.
 Be careful, because if the functional always makes the object different,
 This will never terminate.
 
 > mkClosure :: (a -> a -> Bool) -> (a -> a) -> a -> a
-> mkClosure eq f = match . iterate f
->   where
->       match (a:b:_) | a `eq` b = a
->       match (_:c)              = match c
->       match [] = error "Can't happen: match []"
+> mkClosure eq f = until (\x -> eq x (f x)) f
 
 \subsection{Implementation of FIRST}
 
