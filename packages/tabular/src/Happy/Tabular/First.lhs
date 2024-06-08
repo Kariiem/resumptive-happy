@@ -10,6 +10,7 @@ Implementation of FIRST
 > import qualified Happy.Tabular.NameSet as Set
 > import Happy.Grammar
 > import Data.IntSet (IntSet)
+> import Data.Maybe (fromMaybe)
 
 \subsection{Utilities}
 
@@ -37,7 +38,7 @@ This will never terminate.
 >                  , lookupProdsOfName = prodsOfName
 >                  , non_terminals = nts
 >                  })
->       = joinSymSets (\ h -> maybe (Set.singleton h) id (lookup h env) )
+>       = joinSymSets (\h ->fromMaybe (Set.singleton h) (lookup h env))
 >   where
 >       env = mkClosure (==) (updateFirstSets fst_term prodNo prodsOfName) [(name,Set.empty) | name <- nts]
 
