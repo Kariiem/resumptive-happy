@@ -39,21 +39,24 @@ This will never terminate.
 >                  })
 >       = joinSymSets (\ h -> maybe (Set.singleton h) id (lookup h env) )
 >   where
->       env = mkClosure (==) (getNext fst_term prodNo prodsOfName)
->               [ (name,Set.empty) | name <- nts ]
+>       env = mkClosure (==) (updateFirstSets fst_term prodNo prodsOfName) [(name,Set.empty) | name <- nts]
 
-> getNext :: Name -> (a -> Production) -> (Name -> [a])
->         -> [(Name, IntSet)] -> [(Name, NameSet)]
-> getNext fst_term prodNo prodsOfName env =
->               [ (nm, next nm) | (nm,_) <- env ]
+
+> updateFirstSets :: Name -> (a -> Production) -> (Name -> [a]) -> [(Name, IntSet)]
+>                 -> [(Name, NameSet)]
+> updateFirstSets fst_term prodNo prodsOfName env = [ (nm, nextFstSet nm)
+>                                                   | (nm,_) <- env ]
 >    where
->       fn t | t == errorTok || t == catchTok || t >= fst_term = Set.singleton t
->       fn x = maybe (error "attempted FIRST(e) :-(") id (lookup x env)
+>       terminalP :: Name -> Bool
+>       terminalP s = s >= fst_term
 
->       next :: Name -> NameSet
->       next t | t >= fst_term = Set.singleton t
->       next n = Set.unions
->                       [ joinSymSets fn lhs
->                       | rl <- prodsOfName n
->                       , let Production _ lhs _ _ = prodNo rl ]
+>       currFstSet :: Name -> NameSet
+>       currFstSet s | s == errorTok || s == catchTok || terminalP s = Set.singleton s
+>                    | otherwise = maybe (error "attempted FIRST(e) :-(")
+>                                    id (lookup s env)
 
+>       nextFstSet :: Name -> NameSet
+>       nextFstSet s | terminalP s = Set.singleton s
+>                    | otherwise   = Set.unions [ joinSymSets currFstSet rhs
+>                                               | rl <- prodsOfName s
+>                                               , let Production _ rhs _ _ = prodNo rl ]
